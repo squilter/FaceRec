@@ -39,7 +39,6 @@ public static final double preHaarFaceScaleFactor = 1.5;
 			CvRect biggestFaceRect = FaceDetection.biggestRect(faces);
 			if(!biggestFaceRect.isNull()){
 				biggestFaceRect = FaceDetection.scaleUp(biggestFaceRect, preHaarScaleFactor);
-				//biggestFaceRect = new CvRect(biggestFaceRect.x()-25, biggestFaceRect.y()-25, biggestFaceRect.width()+25, biggestFaceRect.x()+25);
 				opencv_core.cvSetImageROI(grabbedImage,biggestFaceRect);
 				IplImage biggestFaceImg = IplImage.create(biggestFaceRect.width(), biggestFaceRect.height(), IPL_DEPTH_8U, 3);
 				opencv_core.cvCopy(grabbedImage, biggestFaceImg);
@@ -53,10 +52,8 @@ public static final double preHaarFaceScaleFactor = 1.5;
 			IplImage mainFrame = DrawStuff.markHeads(grabbedImage,faces,CvScalar.GREEN,preHaarScaleFactor);//normal
 			if(!biggestFaceRect.isNull() && !(biggestFace.isNull())){
 				mainFrame = DrawStuff.drawRect(mainFrame, biggestFaceRect, CvScalar.RED);
-				//faceCanvas.displayOnCanvas(biggestFace.getOriginalImage());
 				faceCanvas.displayOnCanvas(biggestFace.getMarkedImage(CvScalar.RED));
 			}
-			//IplImage draw = DrawStuff.markHeads(DrawStuff.jetmapHeads(filteredImage,faces,scaleFactor),faces,personInfo,scaleFactor);//black+white+jetmap
 			bigCanvas.displayOnCanvas(mainFrame);
 
 		}
