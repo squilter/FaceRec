@@ -1,7 +1,9 @@
 package edu.wilsonhs.camera;
 
 import com.googlecode.javacv.FrameGrabber.Exception;
+
 import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
+
 import com.googlecode.javacv.cpp.opencv_core;
 import com.googlecode.javacv.cpp.opencv_core.CvRect;
 import com.googlecode.javacv.cpp.opencv_core.CvScalar;
@@ -46,13 +48,19 @@ public static final double preHaarFaceScaleFactor = 1.5;
 				biggestFace.updateFace(biggestFaceImg);
 			}
 			
-			//@TODO rotate head to 0 degrees, scale image to 200x200 by ratio from one eye to another (so that left eye and right eye are always in same place of every image)
+			//@TODO rotate head to 0 degrees
+			System.out.println(biggestFace.getAngleBetweenEyes());
+			//biggestFace.getAngleBetweenEyes();
+			
+			//@TODO scale image to 200x200 by ratio from one eye to another (so that left eye and right eye are always in same place of every image)
+			
 			
 			//show stuff on screen:
 			IplImage mainFrame = DrawStuff.markHeads(grabbedImage,faces,CvScalar.GREEN,preHaarScaleFactor);//normal
 			if(!biggestFaceRect.isNull() && !(biggestFace.isNull())){
 				mainFrame = DrawStuff.drawRect(mainFrame, biggestFaceRect, CvScalar.RED);
-				faceCanvas.displayOnCanvas(biggestFace.getMarkedImage(CvScalar.RED));
+				//faceCanvas.displayOnCanvas(biggestFace.getMarkedImage(CvScalar.RED));
+				faceCanvas.displayOnCanvas(DrawStuff.rotateImage(biggestFace.getMarkedImage(CvScalar.RED),360-biggestFace.getAngleBetweenEyes()));
 			}
 			bigCanvas.displayOnCanvas(mainFrame);
 

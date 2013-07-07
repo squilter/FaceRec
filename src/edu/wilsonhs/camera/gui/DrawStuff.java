@@ -1,5 +1,6 @@
 package edu.wilsonhs.camera.gui;
 
+import static com.googlecode.javacv.cpp.opencv_core.CV_32F;
 import static com.googlecode.javacv.cpp.opencv_core.CV_AA;
 import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
 import static com.googlecode.javacv.cpp.opencv_core.cvCreateImage;
@@ -11,10 +12,13 @@ import static com.googlecode.javacv.cpp.opencv_core.cvRectangle;
 import com.googlecode.javacv.CanvasFrame;
 import com.googlecode.javacv.cpp.opencv_contrib;
 import com.googlecode.javacv.cpp.opencv_core;
+import com.googlecode.javacv.cpp.opencv_core.CvMat;
+import com.googlecode.javacv.cpp.opencv_core.CvPoint2D32f;
 import com.googlecode.javacv.cpp.opencv_core.CvRect;
 import com.googlecode.javacv.cpp.opencv_core.CvScalar;
 import com.googlecode.javacv.cpp.opencv_core.CvSeq;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
+import com.googlecode.javacv.cpp.opencv_imgproc;
 
 public class DrawStuff {
 	private CanvasFrame canvas;
@@ -57,5 +61,17 @@ public class DrawStuff {
 		      opencv_core.cvResetImageROI(colorImg);
 	    }
 	    return colorImg;
+	}
+	
+	public static IplImage rotateImage(IplImage src, double angle){
+		CvMat input = src.asCvMat();
+	    CvPoint2D32f center = new CvPoint2D32f(input.cols() / 2.0F,
+	            input.rows() / 2.0F);
+	    
+	    CvMat rotMat = opencv_core.cvCreateMat(2, 3, CV_32F);
+	    opencv_imgproc.cv2DRotationMatrix(center, angle, 1, rotMat);
+	    CvMat dst = opencv_core.cvCreateMat(input.rows(), input.cols(), input.type());
+	    opencv_imgproc.cvWarpAffine(input, dst, rotMat);
+		return dst.asIplImage();
 	}
 }
