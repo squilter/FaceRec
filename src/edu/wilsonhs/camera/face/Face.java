@@ -1,5 +1,7 @@
 package edu.wilsonhs.camera.face;
 
+import static com.googlecode.javacv.cpp.opencv_core.CV_32F;
+import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
 import static com.googlecode.javacv.cpp.opencv_core.cvClearMemStorage;
 import static com.googlecode.javacv.cpp.opencv_core.cvGetSeqElem;
 import static com.googlecode.javacv.cpp.opencv_core.cvLoad;
@@ -7,17 +9,19 @@ import static com.googlecode.javacv.cpp.opencv_objdetect.CV_HAAR_DO_CANNY_PRUNIN
 import static com.googlecode.javacv.cpp.opencv_objdetect.cvHaarDetectObjects;
 
 import com.googlecode.javacv.cpp.opencv_core;
-import com.googlecode.javacv.cpp.opencv_core.CvPoint;
-import com.googlecode.javacv.cpp.opencv_imgproc;
+import com.googlecode.javacv.cpp.opencv_core.CvMat;
 import com.googlecode.javacv.cpp.opencv_core.CvMemStorage;
+import com.googlecode.javacv.cpp.opencv_core.CvPoint2D32f;
 import com.googlecode.javacv.cpp.opencv_core.CvRect;
 import com.googlecode.javacv.cpp.opencv_core.CvScalar;
 import com.googlecode.javacv.cpp.opencv_core.CvSeq;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
+import com.googlecode.javacv.cpp.opencv_imgproc;
 import com.googlecode.javacv.cpp.opencv_objdetect.CvHaarClassifierCascade;
 
 import edu.wilsonhs.camera.MasterClass;
 import edu.wilsonhs.camera.gui.DrawStuff;
+import static java.lang.Math.*;
 
 /**
  * @author Seb
@@ -50,7 +54,7 @@ public class Face {
 							opencv_core.IPL_DEPTH_8U, 3);
 			opencv_imgproc.cvResize(originalFace, shrunkFace);
 		}
-		eyes = findEyes();
+		eyes = findEyes(shrunkFace);
 	}
 
 	
@@ -73,20 +77,73 @@ public class Face {
 	}
 
 	/**
-	 * @return an image that has been rotated, scaled, equalized... Basically everything that need to be done before classifying it.
+	 * Not Implemented yet!!
+	 * @return an image that has been rotated, scaled, equalized... Basically everything that need to be done before classifying it.  Returns null whenever it can't find what it needs to!
 	 */
-	public IplImage getSearchableImage() {
-		// @TODO returns image rotated, scaled, equalized... Whatever needs to
-		// be done in order to be ready for the comparison
-		return null;
-	}
+//	public IplImage getSearchableImage(int outputSize) {
+//		// @TODO returns image rotated, scaled, equalized... Whatever needs to
+//		// be done in order to be ready for the comparison
+//		//scale, rotate,crop
+//		
+//		//retrieve eyes
+//		int[] leftEyeLoc = new int[2];// x coord, then y coord
+//		int[] rightEyeLoc = new int[2];
+//		if(eyes==null)return null;
+//		leftEyeLoc[0] = eyes[0].x() + eyes[0].width() / 2;
+//		leftEyeLoc[1] = eyes[0].y() + eyes[0].height() / 2;
+//		rightEyeLoc[0] = eyes[1].x() + eyes[1].width() / 2;
+//		rightEyeLoc[1] = eyes[1].y() + eyes[1].height() / 2;
+//		
+//		//retrieve image
+//		IplImage image = getOriginalImage();
+//		
+//		double angleBetweenEyesDegrees = getAngleBetweenEyes();
+//		
+//		//rotate @TODO if scaling problems arise, make it rotate around the left eye		
+//		image = rotateImage(image,360-angleBetweenEyesDegrees);
+//		
+//		
+//		double eyeDistance = distance(leftEyeLoc, rightEyeLoc);
+//		
+//		//crop
+//		if(eyeDistance!=0){
+//			try{
+//				int x,y,width,height,secondX,secondY;
+//				x=(int)(leftEyeLoc[0]-eyeDistance*0.3);
+//				y=(int)(leftEyeLoc[1]-eyeDistance*0.6);
+//				secondX = (int)(rightEyeLoc[0]+eyeDistance*0.3);
+//				secondY = (int)(rightEyeLoc[1]+eyeDistance*1.5);
+////				width=(int)(x+eyeDistance*1.0);
+////				height=(int)(y+eyeDistance*1.7);
+//				width = secondX-x;
+//				height = secondY-y;
+//				opencv_core.cvSetImageROI(image, new CvRect(x, y, width, height));
+//				System.out.println(image.roi().width() + " " + image.roi().height());
+//				System.out.println(width + ", " + height);
+//				IplImage croppedFaceImage = IplImage.create(width, height, IPL_DEPTH_8U, 3);
+//				//IplImage croppedFaceImage = IplImage.create(200, 200, IPL_DEPTH_8U, 3);
+//				opencv_core.cvCopy(image, croppedFaceImage);
+//				opencv_core.cvResetImageROI(image);
+//				
+//				//@TODO figure out why it isn't rotating well
+//				//@TODO scale it to 200x200 (outputSize, outputSize)
+//				
+//				
+//				if(croppedFaceImage.width()==0||croppedFaceImage.height()==0)return null;
+//				//return DrawStuff.drawRedDot(DrawStuff.drawRedDot(image, rightEyeLoc[0], rightEyeLoc[1]), leftEyeLoc[0], leftEyeLoc[1]+100);
+//				return croppedFaceImage;
+//			}catch(Exception e){System.err.println("some sort of error");}
+//		}
+//		return null;
+//
+//	}
 	
 	/**
 	 * @return two eyes, left eye (their right eye) first
 	 */
-	public CvRect[] findEyes() {
+	public CvRect[] findEyes(IplImage src) {
 		CvRect[] toReturn = new CvRect[2];
-		CvSeq eyes = cvHaarDetectObjects(shrunkFace, eyeCascade, storage, 1.1,
+		CvSeq eyes = cvHaarDetectObjects(src, eyeCascade, storage, 1.2,
 				3, CV_HAAR_DO_CANNY_PRUNING);
 		cvClearMemStorage(storage);
 
@@ -96,8 +153,13 @@ public class Face {
 			return null;// if second eye wasn't found (if first eye as well for
 						// that matter)
 		
-		CvRect firstEye = toReturn[0] = scaleUp(new CvRect(cvGetSeqElem(eyes, 0)));
-		CvRect secondEye = toReturn[1] = scaleUp(new CvRect(cvGetSeqElem(eyes, 1)));
+		CvRect firstEye;
+		CvRect secondEye;
+		
+		firstEye =  scaleUp(new CvRect(cvGetSeqElem(eyes, 0)));
+		secondEye = scaleUp(new CvRect(cvGetSeqElem(eyes, 1)));
+		
+		
 		if(firstEye.x()<secondEye.x()){
 			toReturn[0] = firstEye;
 			toReturn[1] = secondEye;
@@ -107,19 +169,15 @@ public class Face {
 		}
 		return toReturn;
 	}
+	
 
 	public boolean isNull() {
 		return (originalFace.isNull() || shrunkFace.isNull());
 	}
-
-	private CvRect scaleUp(CvRect original) {
-		if (original.isNull())
-			return new CvRect();
-		return new CvRect(
-				(int) (original.x() * MasterClass.preHaarFaceScaleFactor),
-				(int) (original.y() * MasterClass.preHaarFaceScaleFactor),
-				(int) (original.width() * MasterClass.preHaarFaceScaleFactor),
-				(int) (original.height() * MasterClass.preHaarFaceScaleFactor));
+	
+	public boolean twoEyes(){
+		return(eyes!=null);
+		
 	}
 
 	public double getAngleBetweenEyes() {
@@ -150,5 +208,33 @@ public class Face {
 					);
 		}
 		
+	}
+	
+	private static IplImage rotateImage(IplImage src, double angle){
+		CvMat input = src.asCvMat();
+	    CvPoint2D32f center = new CvPoint2D32f(input.cols() / 2.0,
+	            input.rows() / 2.0);
+	    
+	    CvMat rotMat = opencv_core.cvCreateMat(2, 3, CV_32F);
+	    opencv_imgproc.cv2DRotationMatrix(center, angle, 1, rotMat);
+	    CvMat dst = opencv_core.cvCreateMat(input.rows(), input.cols(), input.type());
+	    opencv_imgproc.cvWarpAffine(input, dst, rotMat);
+		return dst.asIplImage();
+	}
+
+	private CvRect scaleUp(CvRect original) {
+		if (original.isNull())
+			return new CvRect();
+		return new CvRect(
+				(int) (original.x() * MasterClass.preHaarFaceScaleFactor),
+				(int) (original.y() * MasterClass.preHaarFaceScaleFactor),
+				(int) (original.width() * MasterClass.preHaarFaceScaleFactor),
+				(int) (original.height() * MasterClass.preHaarFaceScaleFactor));
+	}
+	
+	private double distance(int[] p1, int[]p2){
+		double dx=p2[0] - p1[0];
+		double dy=p2[1] - p1[1];
+		return Math.sqrt(dx*dx+dy*dy);
 	}
 }
